@@ -1,0 +1,56 @@
+name: C++ CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ clang-format libgtest-dev
+
+      - name: Build GoogleTest
+        run: |
+          cd /usr/src/gtest
+          sudo cmake .
+          sudo make
+          sudo cp lib/*.a /usr/lib
+
+      - name: Configure CMake
+        run: cmake -B build -S .
+
+      - name: Build project
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
+
+  clang-format:
+    name: Clang Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install clang-format 14
+        run: |
+            sudo apt-get update 
+            sudo apt-get install -y clang-format-14
+            ln -s /usr/bin/clang-format-14 /usr/local/bin/clang-format
+
+      - name: Check formatting
+        run: |
+          FILES=$(find . -name '*.h' -o -name '*.cpp')
+          echo "Checking code formatting..."
+          clang-format --version
+          clang-format --dry-run --Werror $FILES
