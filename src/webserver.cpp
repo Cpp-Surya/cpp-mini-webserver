@@ -1,6 +1,7 @@
 #include "MiniWebServer/webserver.h"
 
-WebServer::WebServer(ISocketWrapper& socket_api) : socket_api_(socket_api)
+WebServer::WebServer(ISocketWrapper& socket_api)
+    : socket_api_(socket_api), thread_pool_(std::thread::hardware_concurrency())
 {
     server_fd_ = socket_api_.socket_create(AF_INET, SOCK_STREAM, 0);
     if (server_fd_ == -1)
@@ -63,49 +64,46 @@ void WebServer::acceptConnections(int max_clients)
         if (client_fd < 0)
         {
             if (running_)
-            {
                 continue;
-            }
             else
-            {
                 break;
-            }
         }
 
         count++;  // increment for testability
-        std::string request = "";
-        char buf[4096];
-        ssize_t n;
-        while ((n = socket_api_.socket_recv(client_fd, buf, sizeof(buf), 0)) > 0)
-        {
-            request.append(buf, buf + n);
-            if (request.find("\r\n\r\n") != std::string::npos)
-                break;
-        }
-
-        std::cout << "---- Request start ----\n" << request << "---- Request end ----\n";
-        const std::string body =
-            "<html><body><h1>Hello World</h1><p>Mini C++ server</p></body></html>";
-        std::string response = "";
-        response += "HTTP/1.1 200 OK\r\n";
-        response += "Content-Type: text/html; charset=utf-8\r\n";
-        response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
-        response += "Connection: close\r\n";
-        response += "\r\n";
-        response += body;
-        socket_api_.socket_send(client_fd, response.c_str(), response.size(), 0);
-        socket_api_.socket_close(client_fd);
+        thread_pool_.enqueue([this, client_fd] { this->handleClient(client_fd); });
     }
 }
 
-void WebServer::shutdownSocket()
+void WebServer::handleClient(int client_fd)
+{
+    std::string request = "";
+    char buf[4096];
+    ssize_t n;
+    while ((n = socket_api_.socket_recv(client_fd, buf, sizeof(buf), 0)) > 0)
+    {
+        request.append(buf, buf + n);
+        if (request.find("\r\n\r\n") != std::string::npos)
+            break;
+    }
+
+    std::cout << "---- Request start ----\n" << request << "---- Request end ----\n";
+    const std::string body = "<html><body><h1>Hello World</h1><p>Mini C++ server</p></body></html>";
+    std::string response = "";
+    response += "HTTP/1.1 200 OK\r\n";
+    response += "Content-Type: text/html; charset=utf-8\r\n";
+    response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+    response += "Connection: close\r\n";
+    response += "\r\n";
+    response += body;
+    socket_api_.socket_send(client_fd, response.c_str(), response.size(), 0);
+    socket_api_.socket_close(client_fd);
+}
+
+void WebServer::stopServer()
 {
     if (server_fd_ != -1)
     {
-        if (socket_api_.socket_shutdown(server_fd_, SHUT_RDWR) < 0)
-        {
-            throw std::runtime_error("Socket shutdown failed");
-        }
+        socket_api_.socket_close(server_fd_);
     }
     running_ = false;
 }

@@ -13,7 +13,7 @@ void signalHandler(int signum)
     std::cout << "\nStopping server...\n";
     if (global_server != nullptr)
     {
-        global_server->shutdownSocket();
+        global_server->stopServer();
         global_server.reset();
     }
 }

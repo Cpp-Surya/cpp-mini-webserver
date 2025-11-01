@@ -18,7 +18,6 @@ class ISocketWrapper
     virtual int socket_accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen) = 0;
     virtual ssize_t socket_send(int sockfd, const void* buf, size_t len, int flags) = 0;
     virtual ssize_t socket_recv(int sockfd, void* buf, size_t n, int flags) = 0;
-    virtual int socket_shutdown(int sockfd, int how) = 0;
     virtual int socket_close(int fd) = 0;
 };
 

@@ -1,7 +1,7 @@
 #ifndef SOCKET_WRAPPER_IMPL_H_
 #define SOCKET_WRAPPER_IMPL_H_
 
-#include "socket_wrapper.h"
+#include "MiniWebServer/socket_wrapper.h"
 
 class SocketWrapperImpl : public ISocketWrapper
 {
@@ -38,8 +38,6 @@ class SocketWrapperImpl : public ISocketWrapper
     {
         return ::recv(sockfd, buf, len, flags);
     }
-
-    int socket_shutdown(int sockfd, int how) override { return ::shutdown(sockfd, how); }
 
     int socket_close(int fd) override { return ::close(fd); }
 };
