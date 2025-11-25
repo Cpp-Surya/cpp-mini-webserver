@@ -1,0 +1,7 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v17.0.6   # choose your clang-format version (match your local version)
+    hooks:
+      - id: clang-format
+        types_or: [c, c++, header]
+        args: ["-style=file"]

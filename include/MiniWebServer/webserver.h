@@ -6,7 +6,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "socket_wrapper.h"
+#include "MiniWebServer/socket_wrapper.h"
+#include "MiniWebServer/thread_pool.h"
 
 class WebServer
 {
@@ -17,10 +18,12 @@ class WebServer
     void bindSocket(const sockaddr_in& addr);
     void listenConnections();
     void acceptConnections(int max_clients = -1);
-    void shutdownSocket();
+    void stopServer();
+    void handleClient(int client_fd);
 
    private:
     ISocketWrapper& socket_api_;
+    ThreadPool thread_pool_;
     int server_fd_{-1};
     std::atomic<bool> running_{false};
 };

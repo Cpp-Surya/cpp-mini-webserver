@@ -1,5 +1,5 @@
 # Create the library
-add_library(webserver STATIC webserver.cpp)
+add_library(webserver STATIC webserver.cpp thread_pool.cpp)
 
 # Tell CMake where to find headers
 # "PUBLIC" means: visible to this library AND anything that links against it
